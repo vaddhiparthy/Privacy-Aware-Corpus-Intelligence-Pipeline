@@ -1,0 +1,78 @@
+PUBLIC_TAXONOMY: dict[str, list[str]] = {
+    "AI, Agents, and LLM Systems": [
+        "ai", "agent", "agents", "llm", "openai", "model", "models", "prompt",
+        "rag", "embedding", "chatbot", "assistant", "automation", "semantic",
+        "classifier", "classification", "inference", "reasoning",
+    ],
+    "Software, Data, and Automation": [
+        "python", "sql", "database", "api", "fastapi", "etl", "pipeline",
+        "script", "powershell", "docker", "github", "git", "server", "query",
+        "json", "xml", "notebook", "pandas", "code", "deployment", "debug",
+    ],
+    "Infrastructure and Home Lab": [
+        "nas", "unifi", "firewall", "router", "vlan", "wifi", "network",
+        "vps", "proxy", "tailscale", "backup", "synology", "container",
+        "server", "pihole", "pi-hole", "dns", "domain",
+    ],
+    "Vehicles, OBD, and Mobility": [
+        "obd", "obdii", "obd-ii", "rav4", "toyota", "honda", "crv", "mazda",
+        "vehicle", "car", "awd", "4wd", "dashcam", "fuel", "scanner",
+        "diagnostic", "sensor", "telemetry",
+    ],
+    "Product Reviews and Buying Guides": [
+        "compare", "comparison", "versus", "vs", "review", "recommend",
+        "recommendation", "buy", "buying", "product", "device", "tool",
+        "price", "pricing", "value", "premium", "budget", "option", "options",
+    ],
+    "Consumer Finance Explainers": [
+        "credit", "card", "bank", "mortgage", "loan", "insurance", "budget",
+        "subscription", "cashback", "fee", "rate", "apr", "points", "finance",
+    ],
+    "Food, Cooking, and Home Living": [
+        "recipe", "cook", "cooking", "biryani", "sambar", "dal", "kitchen",
+        "home", "living", "furniture", "cleaning", "vacuum", "doorbell",
+        "lighting", "bulb", "air", "filter",
+    ],
+    "Learning, Explainers, and Tutorials": [
+        "explain", "guide", "tutorial", "learn", "learning", "course", "study",
+        "notes", "overview", "introduction", "walkthrough", "howto", "how-to",
+    ],
+    "Philosophy, Theory, and Systems Thinking": [
+        "philosophy", "theory", "framework", "strategy", "systems", "thinking",
+        "civilization", "future", "intelligence", "consciousness", "meaning",
+        "life", "resilience", "decision",
+    ],
+    "Creative, Culture, and Publishing": [
+        "world", "story", "myth", "culture", "creative", "blog", "article",
+        "post", "publish", "hologram", "movie", "game", "design",
+    ],
+}
+
+SENSITIVE_DOMAIN_TERMS: dict[str, list[str]] = {
+    "private_health": [
+        "health", "medical", "doctor", "diagnosis", "diagnosed", "symptom",
+        "symptoms", "medicine", "medication", "prescription", "lab", "labs",
+        "blood", "kidney", "nephrologist", "cardiology", "disease", "pain",
+        "injury", "sleep", "weight", "calorie", "calories", "supplement",
+        "supplements", "creatinine", "egfr", "pressure", "hairloss", "aga",
+        "minoxidil", "finasteride",
+    ],
+    "immigration_private": [
+        "immigration", "visa", "h1b", "h-1b", "uscis", "i140", "i-140",
+        "perm", "green card", "greencard", "ead", "i485", "i-485", "lawyer",
+        "attorney", "stamping", "petition", "rfe", "priority date",
+    ],
+    "resume_job_search_private": [
+        "resume", "cv", "linkedin", "recruiter", "interview", "job search",
+        "job application", "salary", "job offer", "layoff",
+        "employer", "manager", "hiring", "promotion", "career path",
+        "cover letter", "workday", "indeed",
+    ],
+}
+
+FACT_CHECK_TOPICS = {
+    "Product Reviews and Buying Guides",
+    "Consumer Finance Explainers",
+    "AI, Agents, and LLM Systems",
+    "Vehicles, OBD, and Mobility",
+}
