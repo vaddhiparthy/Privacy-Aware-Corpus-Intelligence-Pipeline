@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "corpus-privacy-intelligence"
+version = "0.1.0"
+description = "Privacy-aware classification and topic mining for large text corpora"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Surya Vaddhiparthy" }
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+corpus-privacy-intelligence = "corpus_privacy_intelligence.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
