@@ -15,10 +15,21 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+nlp = [
+  "presidio-analyzer>=2.2.355",
+  "spacy>=3.7",
+  "scikit-learn>=1.4",
+]
+embeddings = ["sentence-transformers>=3.0"]
+all = [
+  "presidio-analyzer>=2.2.355",
+  "spacy>=3.7",
+  "scikit-learn>=1.4",
+  "sentence-transformers>=3.0",
+]
 
 [project.scripts]
 corpus-privacy-intelligence = "corpus_privacy_intelligence.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
