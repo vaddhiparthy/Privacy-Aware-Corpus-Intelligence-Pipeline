@@ -6,33 +6,54 @@ from collections import Counter
 from .models import Classification, CorpusUnit
 from .pii import detect_identifiers
 from .taxonomy import FACT_CHECK_TOPICS, PUBLIC_TAXONOMY, SENSITIVE_DOMAIN_TERMS
-from .text import compact_preview, phrase_count, term_counter
+from .text import compact_preview, normalize_token, phrase_count, term_counter
+
+
+def term_score(text_l: str, counts: Counter[str], terms: list[str]) -> int:
+    score = 0
+    for term in terms:
+        term_l = term.lower()
+        if " " in term_l or "-" in term_l:
+            score += text_l.count(term_l)
+        else:
+            score += counts.get(normalize_token(term_l), 0)
+    return score
 
 
 def classify_public_topics(text: str, counts: Counter[str]) -> list[tuple[str, int]]:
+    text_l = text.lower()
     scores = []
     for topic, terms in PUBLIC_TAXONOMY.items():
-        score = phrase_count(text, terms)
-        for term in terms:
-            if " " not in term and "-" not in term:
-                score += counts.get(term.lower(), 0)
+        score = term_score(text_l, counts, terms)
         if score:
             scores.append((topic, score))
     return sorted(scores, key=lambda item: (-item[1], item[0]))[:4]
 
 
-def classify_sensitive_domains(text: str) -> list[str]:
+def classify_sensitive_domains(text: str, counts: Counter[str]) -> list[str]:
+    text_l = text.lower()
     return [
         reason
         for reason, terms in SENSITIVE_DOMAIN_TERMS.items()
-        if phrase_count(text, terms)
+        if term_score(text_l, counts, terms)
     ]
 
 
-def freshness(topics: list[tuple[str, int]], text: str) -> tuple[str, bool]:
+def title_sensitive_reasons(title: str) -> list[str]:
+    title_l = title.lower()
+    reasons = []
+    for reason, terms in SENSITIVE_DOMAIN_TERMS.items():
+        for term in terms:
+            if term.lower() in title_l:
+                reasons.append(reason)
+                break
+    return reasons
+
+
+def freshness(topics: list[tuple[str, int]], text: str, counts: Counter[str]) -> tuple[str, bool]:
     topic_names = {topic for topic, _ in topics}
     current_terms = ["2024", "2025", "2026", "latest", "current", "today", "price", "pricing", "law", "policy", "version"]
-    needs_check = bool(topic_names & FACT_CHECK_TOPICS) or bool(phrase_count(text, current_terms))
+    needs_check = bool(topic_names & FACT_CHECK_TOPICS) or bool(term_score(text.lower(), counts, current_terms))
     return ("needs_current_fact_check", True) if needs_check else ("evergreen_candidate", False)
 
 
@@ -49,9 +70,9 @@ def classify(unit: CorpusUnit) -> Classification:
     cleaned_terms = sorted(counts)
     top_terms = counts.most_common(25)
     topics = classify_public_topics(unit.text, counts)
-    exclusions = classify_sensitive_domains(unit.text)
+    exclusions = sorted(set(classify_sensitive_domains(unit.text, counts) + title_sensitive_reasons(unit.title)))
     identifiers = detect_identifiers(unit.text)
-    fresh_label, needs_fact_check = freshness(topics, unit.text)
+    fresh_label, needs_fact_check = freshness(topics, unit.text, counts)
     score = score_unit(len(unit.text), sum(counts.values()), topics, top_terms)
 
     if identifiers:

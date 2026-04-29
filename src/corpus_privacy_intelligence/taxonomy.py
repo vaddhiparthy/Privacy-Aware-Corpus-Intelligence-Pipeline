@@ -66,7 +66,8 @@ SENSITIVE_DOMAIN_TERMS: dict[str, list[str]] = {
         "resume", "cv", "linkedin", "recruiter", "interview", "job search",
         "job application", "salary", "job offer", "layoff",
         "employer", "manager", "hiring", "promotion", "career path",
-        "cover letter", "workday", "indeed",
+        "cover letter", "workday", "indeed", "senior python developer",
+        "data engineer resume", "data engineering resume",
     ],
 }
 
