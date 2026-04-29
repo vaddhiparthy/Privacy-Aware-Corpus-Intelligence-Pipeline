@@ -52,9 +52,9 @@ SENSITIVE_DOMAIN_TERMS: dict[str, list[str]] = {
     "private_health": [
         "health", "medical", "doctor", "diagnosis", "diagnosed", "symptom",
         "symptoms", "medicine", "medication", "prescription", "lab", "labs",
-        "blood", "kidney", "nephrologist", "cardiology", "disease", "pain",
+        "blood", "kidney", "nephrologist", "cardiology", "cancer", "disease", "pain",
         "injury", "sleep", "weight", "calorie", "calories", "supplement",
-        "supplements", "creatinine", "egfr", "pressure", "hairloss", "aga",
+        "supplements", "creatinine", "egfr", "hairloss", "aga",
         "minoxidil", "finasteride",
     ],
     "immigration_private": [
@@ -65,7 +65,7 @@ SENSITIVE_DOMAIN_TERMS: dict[str, list[str]] = {
     "resume_job_search_private": [
         "resume", "cv", "linkedin", "recruiter", "interview", "job search",
         "job application", "salary", "job offer", "layoff",
-        "employer", "manager", "hiring", "promotion", "career path",
+        "employer", "hiring", "promotion", "career path",
         "cover letter", "workday", "indeed", "senior python developer",
         "data engineer resume", "data engineering resume",
     ],
