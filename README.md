@@ -1,89 +1,145 @@
 # Privacy-Aware Corpus Intelligence Pipeline
 
-A local-first pipeline for mining large text exports while keeping sensitive material out of downstream publishing or analysis workflows.
+This repository implements a local-first classification pipeline for large text exports that contain a mix of reusable knowledge and sensitive personal material.
 
-The project solves a practical problem: useful ideas, research notes, technical explanations, and product comparisons are often mixed with private identifiers, health details, immigration records, resume edits, and job-search material. A basic keyword search either misses risk or throws away too much. This pipeline separates those concerns with an auditable classification flow.
+Public presentation: <https://surya.vaddhiparthy.com/Privacy-Aware-Corpus-Intelligence-Pipeline>
 
-## What It Does
+## Implemented System
 
-- Reads split JSON conversation exports without loading the whole corpus into an LLM context.
-- Breaks long conversations into chunks so safe content can be recovered from otherwise sensitive threads.
-- Detects hard private identifiers with deterministic patterns.
-- Excludes sensitive personal domains such as private health, immigration, and resume/job-search content.
-- Builds compact NLP signatures with normalized terms, stopword removal, light stemming, and term frequencies.
-- Classifies retained content into topic families for review and scheduling.
-- Produces Markdown and JSON outputs for both human review and downstream automation.
+| Capability | Implementation |
+| --- | --- |
+| Split-export ingestion | Streams `conversations-*.json` files from a local export directory |
+| Chunk recovery | Evaluates full conversations and smaller chunks so safe sections can be recovered from mixed threads |
+| Private identifier detection | Deterministic checks for SSN-like strings, emails, phones, cards, addresses, and token-like values |
+| Sensitive-domain routing | Excludes private health, immigration, resume, recruiter, interview, salary, and job-search material |
+| Public topic classification | Scores retained content into explicit topic families with term evidence |
+| Text signatures | Normalized terms, stopword removal, light stemming, and term-frequency metadata |
+| Output artifacts | Writes Markdown review catalogs and JSON machine-readable outputs |
+| Optional validation | Compares the policy classifier against strict rules, semantic scoring, Presidio, and spaCy when optional packages are installed |
 
-## Why It Is Built This Way
-
-The pipeline treats privacy detection as a control system, not a writing prompt.
-
-Hard identifiers such as emails, phone numbers, SSN-like strings, card-like numbers, and API-key shapes are handled with deterministic rules. Sensitive domains are handled separately so general content is not discarded just because it mentions broad words like finance, technology, or data.
-
-The result is conservative where it matters and useful where it should be: private material is filtered out, while public technical and explanatory content remains available for review.
-
-## Project Structure
+## Processing Flow
 
 ```text
-src/corpus_privacy_intelligence/
-  classifier.py    Decision logic for topics, exclusions, scoring, and freshness
-  cli.py           Command-line entry point
-  models.py        Data structures shared across the pipeline
-  pii.py           Deterministic private identifier detection
-  pipeline.py      Orchestration and summary generation
-  reader.py        Export parsing and chunk construction
-  reports.py       Markdown and JSON output writers
-  taxonomy.py      Public topic families and sensitive-domain terms
-  text.py          Token cleanup, stopword removal, and term counting
-tests/
-  test_classifier.py
-docs/
-  architecture.md
+Local text export
+  -> JSON conversation reader
+  -> conversation and chunk units
+  -> deterministic identifier checks
+  -> sensitive-domain policy
+  -> public-topic scoring
+  -> public / private / low-signal output queues
+  -> Markdown and JSON reports
 ```
 
-## Usage
+The pipeline keeps raw private text local. It does not send the corpus to a hosted LLM or remote embedding service.
+
+## Repository Layout
+
+| Path | Purpose |
+| --- | --- |
+| `src/corpus_privacy_intelligence/reader.py` | Reads split JSON exports and builds text units |
+| `src/corpus_privacy_intelligence/pii.py` | Detects hard private identifiers |
+| `src/corpus_privacy_intelligence/taxonomy.py` | Public topic families and sensitive-domain terms |
+| `src/corpus_privacy_intelligence/classifier.py` | Policy classifier and routing decisions |
+| `src/corpus_privacy_intelligence/pipeline.py` | End-to-end scan orchestration |
+| `src/corpus_privacy_intelligence/reports.py` | Markdown and JSON output writers |
+| `src/corpus_privacy_intelligence/advanced_validation.py` | Optional multi-detector validation run |
+| `src/corpus_privacy_intelligence/advanced_detectors.py` | Policy, strict, semantic, Presidio, and spaCy detector wrappers |
+| `tests/` | Classifier regression tests |
+| `docs/` | Architecture and validation notes |
+
+## Install
+
+Core pipeline:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -U pip
+python -m pip install -e ".[dev]"
+```
+
+Optional validation packages:
+
+```powershell
+python -m pip install -e ".[nlp]"
+```
+
+The optional packages are not required for the main classifier.
+
+## Run
 
 ```powershell
 python -m corpus_privacy_intelligence.cli `
   --export-dir "C:\path\to\export" `
   --out-dir "C:\path\to\outputs" `
-  --min-public-score 55
+  --min-public-score 55 `
+  --chunk-chars 9000
 ```
 
-The export directory should contain files named like `conversations-000.json`, `conversations-001.json`, and so on.
+Expected input files are named like:
+
+```text
+conversations-000.json
+conversations-001.json
+```
 
 ## Outputs
 
-- `public_candidates.md`: reviewable public-safe candidates.
-- `public_candidates.json`: machine-readable public-safe candidates with topic and term metadata.
-- `excluded_private.md`: excluded items with reasons.
-- `excluded_private.json`: machine-readable excluded items.
-- `skipped_low_signal.json`: low-signal units retained for audit.
-- `topic_summary.md`: topic counts and draft review schedule.
-- `scan_summary.json`: run-level metrics.
+| Output | Purpose |
+| --- | --- |
+| `public_candidates.md` | Reviewable public-safe candidates |
+| `public_candidates.json` | Machine-readable public-safe rows with topic and term metadata |
+| `excluded_private.md` | Excluded units with reasons |
+| `excluded_private.json` | Machine-readable private exclusions |
+| `skipped_low_signal.json` | Low-signal rows retained for audit |
+| `topic_summary.md` | Topic counts and review schedule |
+| `scan_summary.json` | Run-level counts, topic counts, exclusion counts, and identifier counts |
 
-## Current Privacy Policy
+## Policy
 
-The default policy excludes:
+Default exclusions:
 
-- SSN-like identifiers
-- emails and phone numbers
-- card-like digit sequences
-- API-key and token-like strings
-- identity document context
-- street-address context
-- private health details
-- immigration and visa details
-- resume, recruiter, interview, salary, employer, and job-search material
+- SSN-like identifiers;
+- email addresses and phone numbers;
+- card-like digit sequences;
+- API key and token-like strings;
+- identity-document context;
+- street-address context;
+- private health context;
+- immigration and visa context;
+- resume, recruiter, interview, salary, employer, and job-search context.
 
-The default policy retains general public content such as technical tutorials, product research, general finance explainers, infrastructure notes, vehicle research, creative ideas, philosophy, and learning material.
+Default retainable categories include technical tutorials, infrastructure notes, software automation, AI systems, product research, general finance explainers, vehicle research, learning material, creative ideas, and philosophy.
 
-## Roadmap
+## Advanced Validation
 
-- Add embedding-based topic clustering.
-- Add named-entity recognition for people, organizations, dates, and locations.
-- Add a redaction preview stage for borderline content.
-- Add active-learning feedback so reviewer decisions improve future runs.
-- Add evaluation fixtures with precision and recall reporting.
-- Add optional integrations with mature PII frameworks such as Microsoft Presidio.
+The optional validation command compares the primary policy with independent detectors:
 
+```powershell
+python -m corpus_privacy_intelligence.advanced_validation `
+  --export-dir "C:\path\to\export" `
+  --out-dir "outputs\advanced_validation" `
+  --limit 300
+```
+
+Outputs:
+
+- `advanced_validation_results.json`
+- `advanced_validation_summary.json`
+- `advanced_validation_report.md`
+
+Presidio and spaCy are optional. If they are unavailable, the validation runner records them as unavailable instead of pretending they ran.
+
+## Validation
+
+```powershell
+python -m pytest -q
+python -m compileall src tests
+```
+
+## Privacy Notes
+
+- Run against local exports only.
+- Do not commit raw exports or generated output directories.
+- Treat `public_candidates` as a review queue, not an automatic publishing decision.
+- Keep policy changes explicit in `taxonomy.py`, `pii.py`, and classifier tests.
