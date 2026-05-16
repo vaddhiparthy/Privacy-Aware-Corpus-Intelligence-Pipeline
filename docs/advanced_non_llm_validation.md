@@ -12,7 +12,7 @@ This layer adds mature free NLP tooling around the original local classifier.
 
 ## Why This Exists
 
-The first version relied mostly on custom rules. That is useful but not enough for a serious privacy pipeline. The advanced validation layer makes the decision process more defensible by comparing the custom classifier against mature free NLP libraries.
+The first version relied mostly on custom rules. The advanced validation layer adds independent checks by comparing the custom classifier against established free NLP libraries.
 
 ## Current Ensemble Policy
 

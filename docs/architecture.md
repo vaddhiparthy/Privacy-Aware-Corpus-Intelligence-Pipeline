@@ -1,60 +1,57 @@
 # Architecture
 
-## Objective
+The system converts a local text export into reviewable content catalogs without exposing the full corpus to a hosted language model.
 
-The system converts a large private text archive into reviewable content catalogs without exposing the full corpus to a language model. It is designed for cases where the archive contains a mix of publishable knowledge and sensitive personal material.
+## Pipeline
 
-## Processing Flow
+```text
+Split JSON export
+  -> conversation reader
+  -> conversation units and chunk units
+  -> identifier detector
+  -> sensitive-domain policy
+  -> public-topic scorer
+  -> output router
+  -> Markdown and JSON reports
+```
 
-1. **Ingest**
+## Runtime Components
 
-   The reader streams split JSON files from disk. Each conversation is parsed into ordered messages.
+| Component | Path | Role |
+| --- | --- | --- |
+| Reader | `src/corpus_privacy_intelligence/reader.py` | Streams split JSON files and extracts ordered messages |
+| Text layer | `src/corpus_privacy_intelligence/text.py` | Normalizes terms, removes stopwords, stems terms, and builds previews |
+| PII detector | `src/corpus_privacy_intelligence/pii.py` | Applies deterministic private-identifier patterns |
+| Taxonomy | `src/corpus_privacy_intelligence/taxonomy.py` | Defines public topic families and sensitive-domain terms |
+| Classifier | `src/corpus_privacy_intelligence/classifier.py` | Routes each unit into public, private, or low-signal queues |
+| Pipeline | `src/corpus_privacy_intelligence/pipeline.py` | Coordinates scanning, chunk recovery, classification, and summaries |
+| Reports | `src/corpus_privacy_intelligence/reports.py` | Writes Markdown and JSON artifacts |
+| Advanced validation | `src/corpus_privacy_intelligence/advanced_validation.py` | Runs detector comparison across policy, strict, semantic, Presidio, and spaCy signals |
 
-2. **Build Units**
+## Routing Decisions
 
-   Every conversation is represented as a full unit and as smaller chunk units. Chunking prevents one private section from eliminating an entire long conversation.
+Each unit is assigned one of the practical queues:
 
-3. **Normalize Text**
+| Queue | Meaning |
+| --- | --- |
+| `public_candidate` | Content passed privacy gates and met public-topic score threshold |
+| `exclude_private_identifier` | Hard private identifier was detected |
+| `exclude_sensitive_domain` | Sensitive personal domain was detected |
+| low signal | Unit did not meet public score threshold and was retained for audit |
 
-   The text layer removes common stopwords, applies light stemming, and builds compact term signatures. These signatures support classification, review, and later clustering.
+## Chunk Recovery
 
-4. **Detect Private Identifiers**
+The scanner evaluates full conversations first. If a full conversation is excluded, the pipeline also evaluates smaller chunks from that conversation. This prevents one sensitive section from discarding unrelated safe technical content in a long thread.
 
-   The PII layer applies deterministic patterns for identifiers that should not enter public workflows.
+## Validation Layer
 
-5. **Apply Sensitive-Domain Rules**
+The advanced validation path is intentionally separate from the production policy. It is used to compare classifier behavior against additional free NLP detectors and identify disagreement rows for review.
 
-   The classifier excludes health, immigration, and resume/job-search material. These are intentionally separated from broad public domains such as finance or data systems.
+Optional detectors:
 
-6. **Classify Public Topics**
+- Microsoft Presidio;
+- spaCy;
+- strict rule detector;
+- semantic token-family scorer.
 
-   Retained content is mapped to review categories such as AI systems, software automation, infrastructure, product guides, vehicles, consumer finance explainers, learning, and philosophy.
-
-7. **Score and Route**
-
-   Each unit is routed into one of three queues:
-
-   - public candidate
-   - excluded private
-   - skipped low signal
-
-8. **Report**
-
-   The report layer writes Markdown catalogs for reviewers and JSON files for downstream tools.
-
-## Design Principles
-
-- Keep raw private text local.
-- Prefer deterministic privacy controls for hard identifiers.
-- Keep sensitive-domain policy explicit and auditable.
-- Salvage safe chunks instead of deleting entire conversations too aggressively.
-- Generate artifacts that a reviewer can inspect without opening the full archive.
-
-## Extension Points
-
-- Replace taxonomy scoring with embedding similarity.
-- Add a NER layer before reporting.
-- Add a redaction stage after classification.
-- Add a vector index for approved public chunks.
-- Add reviewer feedback and active learning.
-
+Unavailable optional detectors are reported as unavailable rather than treated as passing signals.
