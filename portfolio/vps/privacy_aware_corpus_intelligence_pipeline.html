@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Privacy-Aware Corpus Intelligence Pipeline</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Source+Serif+4:wght@600;700&display=swap">
+    <style>
+      :root {
+        --bg:#f4ede3;
+        --panel:#fffaf3;
+        --panel-strong:#fff6e8;
+        --ink:#18212b;
+        --muted:#667085;
+        --border:#dfd0bd;
+        --accent:#0d5f68;
+        --accent-soft:#d9eceb;
+        --warm:#b8613e;
+        --green:#136f4b;
+        --amber:#a15c12;
+        --red:#9f2d2d;
+        --code:#111827;
+        --code-ink:#e5e7eb;
+      }
+      * { box-sizing:border-box; }
+      html { scroll-behavior:smooth; }
+      body {
+        margin:0;
+        font-family:Manrope,Segoe UI,sans-serif;
+        color:var(--ink);
+        background:
+          radial-gradient(circle at 18% 8%, rgba(184,97,62,.18), transparent 28rem),
+          radial-gradient(circle at 78% 4%, rgba(13,95,104,.18), transparent 32rem),
+          linear-gradient(180deg,#f8f0e5,#f2e8db 55%,#ede1d1);
+      }
+      main { width:min(1240px, calc(100vw - 42px)); margin:0 auto; padding:42px 0 70px; }
+      .hero {
+        display:grid;
+        grid-template-columns:1.05fr .95fr;
+        gap:26px;
+        align-items:end;
+        min-height:410px;
+      }
+      .eyebrow {
+        color:var(--warm);
+        font-weight:800;
+        text-transform:uppercase;
+        letter-spacing:.12em;
+        font-size:.78rem;
+      }
+      h1, h2, h3 { margin:0; }
+      h1 {
+        font-family:"Source Serif 4", Georgia, serif;
+        font-size:clamp(2.7rem,6vw,6.4rem);
+        line-height:.92;
+        letter-spacing:-.06em;
+      }
+      h2 {
+        font-family:"Source Serif 4", Georgia, serif;
+        font-size:clamp(1.8rem,3vw,3rem);
+        line-height:1;
+        letter-spacing:-.035em;
+      }
+      h3 { font-size:1rem; letter-spacing:-.01em; }
+      .lead { color:var(--muted); line-height:1.75; font-size:1rem; }
+      .hero-card, .card, .section {
+        border:1px solid var(--border);
+        border-radius:20px;
+        background:rgba(255,250,243,.92);
+        box-shadow:0 22px 70px rgba(63,52,40,.12);
+      }
+      .hero-card { padding:24px; }
+      .nav {
+        position:sticky;
+        top:0;
+        z-index:10;
+        backdrop-filter:blur(18px);
+        background:rgba(244,237,227,.78);
+        border-bottom:1px solid rgba(223,208,189,.75);
+        margin:0 calc((100vw - min(1240px, calc(100vw - 42px))) / -2);
+        padding:12px calc((100vw - min(1240px, calc(100vw - 42px))) / 2);
+      }
+      .nav-inner { display:flex; gap:10px; overflow:auto; }
+      .nav a {
+        text-decoration:none;
+        color:var(--ink);
+        border:1px solid var(--border);
+        background:rgba(255,250,243,.78);
+        border-radius:999px;
+        padding:9px 13px;
+        white-space:nowrap;
+        font-weight:800;
+        font-size:.82rem;
+      }
+      .grid-3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+      .grid-2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+      .section { padding:24px; margin-top:18px; }
+      .card { padding:18px; }
+      .metric { font-size:2.2rem; font-weight:800; color:var(--accent); letter-spacing:-.04em; }
+      .flow { display:grid; grid-template-columns:repeat(6,minmax(120px,1fr)); gap:10px; margin-top:16px; overflow:auto; }
+      .flow-card {
+        min-height:150px;
+        border:1px solid var(--border);
+        border-radius:16px;
+        background:linear-gradient(180deg,#fffdf9,#f9efe2);
+        padding:14px;
+        position:relative;
+      }
+      .flow-card::after {
+        content:"";
+        position:absolute;
+        right:-11px;
+        top:50%;
+        width:20px;
+        height:1px;
+        background:var(--accent);
+      }
+      .flow-card:last-child::after { display:none; }
+      .badge {
+        display:inline-flex;
+        align-items:center;
+        gap:7px;
+        border-radius:999px;
+        padding:6px 10px;
+        background:var(--accent-soft);
+        color:#06494f;
+        font-size:.76rem;
+        font-weight:800;
+      }
+      .dot { width:8px; height:8px; border-radius:50%; background:var(--green); display:inline-block; }
+      table { width:100%; border-collapse:collapse; font-size:.86rem; }
+      th, td { text-align:left; vertical-align:top; border-bottom:1px solid var(--border); padding:10px 8px; }
+      th { color:#344054; background:rgba(255,246,232,.8); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; }
+      pre {
+        overflow:auto;
+        border:1px solid #263244;
+        border-radius:14px;
+        background:var(--code);
+        color:var(--code-ink);
+        padding:16px;
+        line-height:1.55;
+        max-height:520px;
+      }
+      code { font-family:Consolas, Menlo, monospace; }
+      .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:14px 0; }
+      button, select {
+        border:1px solid var(--border);
+        border-radius:999px;
+        background:#fffaf3;
+        color:var(--ink);
+        padding:10px 14px;
+        font-weight:800;
+      }
+      button { background:var(--accent); color:white; cursor:pointer; border-color:var(--accent); }
+      .plain-button { background:#fffaf3; color:var(--ink); border-color:var(--border); }
+      .thought {
+        position:relative;
+        margin-top:16px;
+        padding:18px;
+        border-radius:28px;
+        background:#fffdf8;
+        border:1px solid var(--border);
+      }
+      .thought::before, .thought::after {
+        content:"";
+        position:absolute;
+        border-radius:50%;
+        background:#fffdf8;
+        border:1px solid var(--border);
+      }
+      .thought::before { width:22px; height:22px; right:34px; bottom:-14px; }
+      .thought::after { width:12px; height:12px; right:18px; bottom:-27px; }
+      .table-wrap { overflow:auto; border:1px solid var(--border); border-radius:14px; background:rgba(255,250,243,.9); }
+      .safe-cell { background:#e6f3ef; color:#064e3b; font-weight:800; }
+      .review-cell { background:#fff1d6; color:#7a3d00; font-weight:800; }
+      .private-cell { background:#f8dddd; color:#7f1d1d; font-weight:800; }
+      .inline-link { color:var(--accent); font-weight:800; text-decoration:none; border-bottom:1px solid rgba(13,95,104,.35); }
+      .muted { color:var(--muted); }
+      .tabs { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0; }
+      .tab-button.active { background:var(--warm); border-color:var(--warm); color:#fff; }
+      .tab-panel { display:none; }
+      .tab-panel.active { display:block; }
+      .wiki-layout { display:grid; grid-template-columns:260px 1fr; gap:18px; }
+      .wiki-nav {
+        border-right:1px solid var(--border);
+        padding-right:16px;
+        position:sticky;
+        top:72px;
+        align-self:start;
+      }
+      .wiki-nav a {
+        display:block;
+        color:var(--ink);
+        text-decoration:none;
+        padding:7px 0;
+        border-bottom:1px solid rgba(223,208,189,.55);
+        font-size:.9rem;
+      }
+      .wiki-article { border-bottom:1px solid var(--border); padding:18px 0; }
+      .wiki-article:first-child { padding-top:0; }
+      .wiki-article h3 { font-family:"Source Serif 4", Georgia, serif; font-size:1.55rem; margin-bottom:10px; }
+      .wiki-article p { color:#344054; line-height:1.72; }
+      .wiki-article ul { color:#344054; line-height:1.7; }
+      .wiki-article code { background:#f1e4d3; border:1px solid var(--border); border-radius:6px; padding:1px 5px; }
+      footer { padding:28px 0; color:var(--muted); font-size:.88rem; }
+      @media (max-width: 920px) {
+        .hero, .grid-3, .grid-2, .wiki-layout { grid-template-columns:1fr; }
+        .wiki-nav { position:static; border-right:0; border-bottom:1px solid var(--border); padding-bottom:12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero" id="top">
+        <div>
+          <p class="eyebrow">Privacy-Aware Corpus Intelligence Pipeline</p>
+          <h1>Privacy-safe intelligence from large text archives.</h1>
+          <p class="lead">A local-first corpus analysis platform that separates personal, regulated, and review-worthy conversational records from public-safe knowledge candidates. The project focuses on cost-conscious privacy screening, multi-model validation, and auditable data products without sending the full archive through bulk LLM inference.</p>
+        </div>
+        <div class="hero-card">
+          <span class="badge"><span class="dot"></span> Local privacy pipeline implemented</span>
+          <p class="lead">The system ingests a large exported conversation corpus, normalizes it into classification units, applies deterministic privacy policy gates, cross-checks the result with independent non-LLM detectors, and writes JSON plus Markdown evidence for review.</p>
+          <div class="grid-3" id="summary-metrics"></div>
+          <div class="thought">
+            <h3>What inspired this build</h3>
+            <p class="lead">We often hear that conversations may be recorded for audit, quality, or training purposes. I wanted to go behind the curtain and build the data engineering version of that problem: how do you remove identity, sensitive context, and private identifiers from a large text archive while still preserving useful knowledge? This project became a real-time privacy filtering pipeline that validates multiple non-LLM approaches and chooses an ensemble route that is practical, inspectable, and affordable in 2026.</p>
+          </div>
+        </div>
+      </section>
+
+      <nav class="nav">
+        <div class="nav-inner">
+          <a href="#overview">Overview</a>
+          <a href="#dataset">Dataset</a>
+          <a href="#flow">Data Flow</a>
+          <a href="#demo">Demo Preview</a>
+          <a href="#schema">Schema</a>
+          <a href="#validation">Model Comparison</a>
+          <a href="#quality">Quality Gates</a>
+          <a href="#toolchain">Toolchain</a>
+          <a href="#wiki">Knowledge Bank</a>
+        </div>
+      </nav>
+
+      <section class="section" id="overview">
+        <h2>Platform Overview</h2>
+        <p class="lead">The platform was designed for the uncomfortable middle ground between raw text archives and publishable or reusable knowledge. The objective is not to summarize everything. The objective is to build a governed filter that can identify private identity markers, sensitive domains, and ambiguous records before any downstream writing, analytics, indexing, or knowledge-base process touches the content.</p>
+        <div class="grid-3" id="control-cards"></div>
+      </section>
+
+      <section class="section" id="dataset">
+        <h2>Dataset Information</h2>
+        <p class="lead">The source material is described only as a large exported conversational corpus. The page intentionally does not disclose personal topics, raw excerpts, names, account details, or source-file identifiers. All public examples below are synthetic but shaped like the real pipeline contracts.</p>
+        <div class="grid-3" id="dataset-metrics"></div>
+        <div class="table-wrap" id="topic-table" style="margin-top:16px;"></div>
+      </section>
+
+      <section class="section" id="flow">
+        <h2>End-to-End Data Flow</h2>
+        <p class="lead">The flow is built to avoid token burn. Cheap local passes do most of the work. Expensive semantic review is reserved for disagreement rows, review queues, or manually selected candidates.</p>
+        <div class="flow" id="flow-cards"></div>
+      </section>
+
+      <section class="section" id="demo">
+        <h2>Live Preview of the Classification Passes</h2>
+        <p class="lead">This section shows generic source payloads and curated outputs using the same language as the implementation. The examples are harmless and synthetic: a public technical note, an identity-heavy private note, and a borderline review item.</p>
+        <div class="toolbar">
+          <label for="sample-select"><strong>Sample payload</strong></label>
+          <select id="sample-select"></select>
+          <button id="run-sample">Run Preview</button>
+          <a class="inline-link" href="https://github.com/vaddhiparthy/Privacy-Aware-Corpus-Intelligence-Pipeline" target="_blank" rel="noreferrer">GitHub repository</a>
+        </div>
+        <div class="grid-2">
+          <div>
+            <h3>Source Payload</h3>
+            <pre id="source-output">Select a sample and run the preview.</pre>
+          </div>
+          <div>
+            <h3>Curated Output</h3>
+            <pre id="classification-output">Waiting for classifier output...</pre>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab-button active" data-tab="policy">Policy Pass</button>
+          <button class="tab-button" data-tab="strict">Strict Detector</button>
+          <button class="tab-button" data-tab="semantic">Semantic Score</button>
+          <button class="tab-button" data-tab="advanced">Advanced NLP</button>
+        </div>
+        <div class="tab-panel active" id="tab-policy">
+          <pre>def classify_unit(unit):
+    identifier_hits = pii_detector.scan(unit.text)
+    sensitive_hits = domain_policy.scan(unit.title, unit.text)
+    topic_scores = topic_classifier.score(unit.text)
+
+    if identifier_hits.hard_private or sensitive_hits.private_domain:
+        return Decision(label="private", reason=sensitive_hits.primary_reason)
+    if topic_scores.best_score &lt; MIN_PUBLIC_SIGNAL:
+        return Decision(label="skip", reason="low_signal")
+    return Decision(label="public", topic=topic_scores.best_topic)</pre>
+        </div>
+        <div class="tab-panel" id="tab-strict">
+          <pre>def strict_detector(unit):
+    direct_identifiers = regex_bank.find_identifiers(unit.text)
+    sensitive_domains = strict_taxonomy.find_private_context(unit.text)
+
+    if direct_identifiers or sensitive_domains.high_confidence:
+        return "private"
+    if sensitive_domains.partial or mixed_private_public(unit):
+        return "review"
+    return "public"</pre>
+        </div>
+        <div class="tab-panel" id="tab-semantic">
+          <pre>def semantic_score_classifier(unit):
+    private_score = weighted_terms(unit.text, private_vocab)
+    public_score = weighted_terms(unit.text, public_vocab)
+    margin = abs(public_score - private_score)
+
+    if private_score &gt;= HARD_PRIVATE_SCORE:
+        return "private"
+    if margin &lt; REVIEW_MARGIN:
+        return "review"
+    return "public" if public_score &gt; private_score else "private"</pre>
+        </div>
+        <div class="tab-panel" id="tab-advanced">
+          <pre>def advanced_non_llm_pass(unit):
+    presidio_entities = presidio_analyzer.analyze(text=unit.text, language="en")
+    spacy_entities = nlp(unit.text).ents
+    custom_hits = custom_recognizers.scan(unit.text)
+
+    return AdvancedSignals(
+        hard_private=has_account_email_phone_secret(presidio_entities, custom_hits),
+        review_signals=repeated_person_location_or_org(spacy_entities),
+        explanation=build_evidence_trace(presidio_entities, spacy_entities, custom_hits),
+    )</pre>
+        </div>
+      </section>
+
+      <section class="section" id="schema">
+        <h2>Schema and Source Contract</h2>
+        <div class="grid-2">
+          <div>
+            <h3>Classification Unit Contract</h3>
+            <pre id="unit-contract"></pre>
+          </div>
+          <div>
+            <h3>Classifier Result Contract</h3>
+            <pre id="result-contract"></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="validation">
+        <h2>Model Comparison and Ensemble Results</h2>
+        <p class="lead">The system does not trust one classifier blindly. It compares multiple independent views of the same corpus: a production policy classifier, a strict privacy detector, a semantic scoring classifier, Presidio, spaCy NER, and a final ensemble route. The large full-corpus pass establishes the production baseline. The advanced NLP sample adds a free, state-of-the-art non-LLM validation layer.</p>
+        <div class="table-wrap" id="validation-table"></div>
+        <div class="grid-2" style="margin-top:16px;">
+          <div class="card">
+            <h3>Agreement Snapshot</h3>
+            <div id="agreement-metrics" class="grid-3" style="margin-top:12px;"></div>
+          </div>
+          <div class="card">
+            <h3>Why the ensemble works</h3>
+            <p class="lead">The policy classifier enforces the product rule: private domains and identifiers override usefulness. The strict detector challenges that decision with a narrower safety lens. The semantic classifier catches topic intent. Presidio and spaCy provide independent entity recognition. The ensemble protects the corpus by preserving clear public candidates, excluding high-confidence private records, and routing ambiguous items to review.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="quality">
+        <h2>Quality and Privacy Gates</h2>
+        <p class="lead">The pipeline treats privacy as a data quality problem. Every unit receives evidence, not just a label. That evidence can be audited, sampled, validated, and improved without exposing the raw corpus.</p>
+        <div class="table-wrap" id="quality-table"></div>
+      </section>
+
+      <section class="section" id="toolchain">
+        <h2>Engineering Toolchain</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Implemented Stack</h3>
+            <div id="implemented-stack"></div>
+          </div>
+          <div class="card">
+            <h3>Expansion Path</h3>
+            <div id="planned-stack"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="wiki">
+        <div class="wiki-layout">
+          <aside class="wiki-nav">
+            <h3>Knowledge Bank</h3>
+            <div id="wiki-nav-links"></div>
+          </aside>
+          <div>
+            <h2>Project Knowledge Bank</h2>
+            <p class="lead">The notes below document the engineering thinking behind the project: how the privacy filter is shaped, why the classifiers are separated, how validation works, and how the platform can mature into a larger corpus governance system.</p>
+            <div id="wiki-body"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Built by Sri Surya S. Vaddhiparthy. Public technical surface for a privacy-aware corpus intelligence platform.
+      </footer>
+    </main>
+
+    <script>
+      const metrics = {
+        "Units scanned": "11,336",
+        "Public candidates": "3,078",
+        "Private exclusions": "8,227",
+        "Review share": "3.40%",
+        "Unanimous agreement": "87.02%",
+        "Advanced sample": "300"
+      };
+      const controlCards = [
+        ["Local-first ingestion", "Reads exported conversation JSON locally and avoids external API calls during the broad scan."],
+        ["Privacy-first routing", "Hard identifiers and sensitive domains override public usefulness so risky text is excluded before downstream use."],
+        ["Multi-classifier validation", "Production policy, strict detector, semantic scoring, Presidio, spaCy, and ensemble outputs are compared."],
+        ["Presidio and spaCy validation", "Adds open-source PII and named-entity recognition as independent checks beside the custom policy engine."],
+        ["Cost control", "Uses deterministic and open-source NLP passes first, reserving LLM-style judgment for narrow challenge sets if needed."],
+        ["Review queue mechanics", "Routes borderline records into a separate review lane with reasons, votes, and detector evidence instead of forcing a risky binary label."]
+      ];
+      const topics = [
+        ["Software/Data/Automation", 761],
+        ["AI/Agents/LLM", 669],
+        ["Product Reviews/Buying", 388],
+        ["Infrastructure/Home Lab", 382],
+        ["Learning/Tutorials", 329],
+        ["Food/Home", 194],
+        ["Philosophy/Systems", 130],
+        ["Consumer Finance", 94],
+        ["Vehicles/OBD/Mobility", 67],
+        ["Creative/Culture/Publishing", 64]
+      ];
+      const flow = [
+        ["Corpus discovery", "File scanner", "Finds split export files and indexes eligible conversation records."],
+        ["Unit builder", "Normalizer", "Creates conversation-level units and fallback chunks for mixed or excluded records."],
+        ["Policy pass", "Custom Python rules", "Detects direct identifiers, private domains, low-signal text, and public topic candidates."],
+        ["Validation pass", "Independent classifiers", "Runs strict, semantic, Presidio, and spaCy checks to compare decisions."],
+        ["Ensemble router", "Agreement engine", "Keeps unanimous public rows, excludes high-confidence private rows, and marks disagreements for review."],
+        ["Evidence writer", "JSON and Markdown", "Publishes summaries, disagreements, statistics, and reproducible review artifacts."]
+      ];
+      const samples = [
+        {
+          name: "Public technical note",
+          source: {
+            unit_id: "sample-public-001",
+            title: "Local data validation pipeline",
+            text: "Design notes for validating CSV inputs, normalizing timestamps, checking schema drift, and writing clean aggregate reports.",
+            source_kind: "conversation"
+          },
+          output: {
+            decision: "public",
+            topic: "Software/Data/Automation",
+            confidence: 0.91,
+            reasons: ["technical public signal", "no direct identifiers", "no sensitive private domain"],
+            ensemble_route: "keep_public_candidate"
+          }
+        },
+        {
+          name: "Private identifier note",
+          source: {
+            unit_id: "sample-private-002",
+            title: "Account access note",
+            text: "Synthetic example containing a personal email, phone-shaped number, address-like phrase, and account recovery context.",
+            source_kind: "conversation"
+          },
+          output: {
+            decision: "private",
+            topic: null,
+            confidence: 0.98,
+            reasons: ["email-like identifier", "phone-like identifier", "account recovery context"],
+            ensemble_route: "exclude_private"
+          }
+        },
+        {
+          name: "Borderline review note",
+          source: {
+            unit_id: "sample-review-003",
+            title: "General wellness research note",
+            text: "Synthetic masked example: a general question about comparing lifestyle guidance and non-emergency wellness information, with all personal details removed.",
+            source_kind: "conversation"
+          },
+          output: {
+            decision: "review",
+            topic: "General Research",
+            confidence: 0.63,
+            reasons: ["health-adjacent context", "no direct identifiers", "requires review before public reuse"],
+            ensemble_route: "manual_review_queue"
+          }
+        }
+      ];
+      const validationRows = [
+        ["Production policy classifier", "Full corpus", "3,092 public / 8,227 private / 17 review", "Primary rule engine. Strong at enforcing sensitive-domain exclusion and retaining public technical material."],
+        ["Strict detector", "Full corpus", "2,857 public / 7,849 private / 630 review", "More conservative. Useful for forcing ambiguous mixed records into review instead of silently keeping them."],
+        ["Semantic score classifier", "Full corpus", "2,961 public / 7,938 private / 437 review", "Balances public-topic signal against private-domain signal. Useful for catching intent beyond exact keyword matches."],
+        ["Presidio analyzer", "300-unit sample", "86 public / 54 private / 160 review", "Open-source PII detection layer. Strong for entity evidence, but intentionally calibrated so generic people and places become review signals."],
+        ["spaCy NER", "300-unit sample", "49 public / 55 private / 196 review", "Independent named-entity detector. Useful as a challenge layer, not a standalone privacy decision maker."],
+        ["Final advanced ensemble", "300-unit sample", "144 public / 111 private / 45 review", "Combines policy, strict, semantic, Presidio, and spaCy signals into a practical keep/exclude/review route."]
+      ];
+      const agreement = {
+        "Majority public": "26.58%",
+        "Majority private": "70.02%",
+        "Majority review": "3.40%",
+        "Unanimous": "87.02%",
+        "Two-to-one": "12.54%",
+        "Three-way split": "0.43%"
+      };
+      const qualityGates = [
+        ["Direct identifier gate", "Regex bank plus Presidio recognizers", "Email, phone, account-like numbers, identity documents, secrets, and address contexts route the unit away from public output."],
+        ["Sensitive-domain gate", "Private taxonomy", "Health, immigration, resume/job-search, and similar personal contexts are excluded when the conversation is private rather than educational."],
+        ["Public usefulness gate", "Topic scoring", "Low-signal text is skipped instead of being inflated into meaningless content candidates."],
+        ["Agreement gate", "Three-classifier validation", "Disagreements are measured and written to review artifacts so calibration can be tested instead of guessed."],
+        ["Advanced NLP gate", "Presidio and spaCy", "Entity recognition is used as independent validation, with generic named entities treated carefully to reduce false exclusions."],
+        ["Evidence gate", "Markdown and JSON reports", "Every run leaves counts, topic distributions, exclusion reasons, identifier summaries, and disagreement samples."]
+      ];
+      const implemented = [
+        ["Python", "Pipeline implementation, CLI scripts, data contracts, report writers, and validation runners."],
+        ["Regex and custom recognizers", "Fast deterministic detection for identifiers, secrets, account-like patterns, and sensitive contexts."],
+        ["Presidio", "Open-source PII analyzer used as an independent privacy validation layer."],
+        ["spaCy", "Named-entity recognition for challenge validation and review-signal generation."],
+        ["scikit-learn", "Foundation for future vectorization, classical classifiers, calibration, and model evaluation."],
+        ["Markdown and JSON", "Human-readable reports plus machine-readable summaries and disagreement files."]
+      ];
+      const planned = [
+        ["Snorkel-style weak supervision", "Formalize labeling functions and learn their weights instead of treating every detector equally."],
+        ["Local embeddings", "Cluster near-duplicate topics and improve semantic grouping without sending data to external services."],
+        ["Active learning", "Use small human-reviewed samples to improve thresholds and measure precision/recall over time."],
+        ["DuckDB analytics", "Query run history, label drift, topic counts, and detector disagreement as analytical tables."],
+        ["Review workbench", "Build a small UI for sampling ambiguous rows, updating policies, and replaying validation."],
+        ["CI validation", "Run synthetic privacy fixtures on every code change to protect against accidental policy regression."]
+      ];
+      const wiki = [
+        ["Project Thesis", "Large text archives are not automatically reusable just because they are searchable. A useful corpus needs a privacy boundary before it can become a source of public articles, internal knowledge, analytics, or training examples. This project turns that boundary into a measurable data pipeline. It treats privacy classification as an engineering problem with contracts, detectors, validators, artifacts, and calibration loops."],
+        ["Why Non-LLM First", "The cheapest broad pass should not be a large model reading every character. The pipeline uses deterministic detectors and open-source NLP first because they are inspectable, repeatable, and inexpensive. LLM review can still be useful, but only after the corpus has been narrowed to disagreement cases or manually selected samples. That design keeps cost under control and makes the privacy policy easier to audit."],
+        ["Classifier Roles", "The production classifier expresses the actual policy: identifiers and sensitive domains override public usefulness. The strict detector is a challenge layer that errs toward review. The semantic score classifier checks whether topic intent supports public retention or private exclusion. Presidio and spaCy add outside entity-detection evidence. The ensemble exists because no single detector is trustworthy enough for a large personal corpus."],
+        ["Result Interpretation", "The full run classified roughly a quarter of the corpus as public candidates, roughly seventy percent as private, and a small remainder as review. That does not mean the excluded material has no value. It means those records are not safe for public reuse without stronger redaction, transformation, or private-only handling. The review queue is deliberately small so humans can focus where judgment matters."],
+        ["Privacy Calibration", "Entity recognition has to be calibrated carefully. A generic person, city, company, or date is not always private. A repeated named entity in a personal context may be sensitive, while a public product name or a public figure may be harmless. The current system therefore treats hard identifiers as private, sensitive domains as private, and softer named-entity signals as review evidence unless they combine with stronger context."],
+        ["Engineering Evidence", "The repository demonstrates ingestion, chunking, classification, validation, report generation, and advanced non-LLM validation. The important proof is not a single label. The proof is the trace: why the label was produced, which detectors agreed, where disagreement happened, and what can be sampled later for calibration."],
+        ["Next Version", "The next version should add weak-supervision weighting, local embeddings for topic clustering, a DuckDB-backed run database, and a review workbench. Those upgrades would turn the current classifier into a full corpus governance platform where policy changes can be replayed and measured across historical runs."]
+      ];
+
+      const escapeHtml = (value) => String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+      const renderMetricCards = (items) => Object.entries(items)
+        .map(([label, value]) => `<div class="card"><div class="metric">${escapeHtml(value)}</div><div class="muted">${escapeHtml(label)}</div></div>`)
+        .join("");
+      const renderToolList = (items) => `<table><thead><tr><th>Tool</th><th>Role in the platform</th></tr></thead><tbody>${items.map(([tool, role]) => `<tr><td><strong>${escapeHtml(tool)}</strong></td><td>${escapeHtml(role)}</td></tr>`).join("")}</tbody></table>`;
+      const slugify = (value) => String(value ?? "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+      document.getElementById("summary-metrics").innerHTML = renderMetricCards(Object.fromEntries(Object.entries(metrics).slice(0, 6)));
+      document.getElementById("control-cards").innerHTML = controlCards
+        .map(([title, copy]) => `<div class="card"><span class="badge"><span class="dot"></span> Implemented</span><h3 style="margin-top:12px;">${escapeHtml(title)}</h3><p class="lead">${escapeHtml(copy)}</p></div>`)
+        .join("");
+      document.getElementById("dataset-metrics").innerHTML = renderMetricCards({
+        "Corpus units": "11,336",
+        "Public candidate units": "3,078",
+        "Excluded units": "8,227",
+        "Skipped low-signal units": "31",
+        "Identifier categories": "7",
+        "Public topic groups": "10"
+      });
+      document.getElementById("topic-table").innerHTML = `<table><thead><tr><th>Public-safe topic group</th><th>Candidate units</th></tr></thead><tbody>${topics.map(([topic, count]) => `<tr><td>${escapeHtml(topic)}</td><td>${escapeHtml(count)}</td></tr>`).join("")}</tbody></table>`;
+      document.getElementById("flow-cards").innerHTML = flow.map(([stage, tool, output], index) => `
+        <div class="flow-card">
+          <span class="badge">Stage ${index + 1}</span>
+          <h3 style="margin-top:10px;">${escapeHtml(stage)}</h3>
+          <p class="muted"><strong>${escapeHtml(tool)}</strong></p>
+          <p class="muted">${escapeHtml(output)}</p>
+        </div>`).join("");
+
+      const sampleSelect = document.getElementById("sample-select");
+      sampleSelect.innerHTML = samples.map((sample, index) => `<option value="${index}">${escapeHtml(sample.name)}</option>`).join("");
+      function renderSample() {
+        const sample = samples[Number(sampleSelect.value)];
+        document.getElementById("source-output").textContent = JSON.stringify(sample.source, null, 2);
+        document.getElementById("classification-output").textContent = JSON.stringify(sample.output, null, 2);
+      }
+      document.getElementById("run-sample").addEventListener("click", renderSample);
+      renderSample();
+
+      document.querySelectorAll(".tab-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".tab-button").forEach((node) => node.classList.remove("active"));
+          document.querySelectorAll(".tab-panel").forEach((node) => node.classList.remove("active"));
+          button.classList.add("active");
+          document.getElementById(`tab-${button.dataset.tab}`).classList.add("active");
+        });
+      });
+
+      document.getElementById("unit-contract").textContent = JSON.stringify({
+        unit_id: "string",
+        conversation_id: "string",
+        source_kind: "conversation | chunk",
+        title: "string",
+        text: "string",
+        token_estimate: "integer",
+        metadata: {
+          source_file: "redacted",
+          message_count: "integer",
+          chunk_index: "integer | null"
+        }
+      }, null, 2);
+      document.getElementById("result-contract").textContent = JSON.stringify({
+        unit_id: "string",
+        decision: "public | private | review | skip",
+        topic: "string | null",
+        exclusion_reasons: ["string"],
+        identifier_hits: ["string"],
+        classifier_votes: {
+          policy: "public | private | review",
+          strict: "public | private | review",
+          semantic: "public | private | review",
+          presidio: "public | private | review",
+          spacy: "public | private | review"
+        },
+        ensemble_route: "keep | exclude | review",
+        evidence: ["string"]
+      }, null, 2);
+      document.getElementById("validation-table").innerHTML = `<table><thead><tr><th>Classifier</th><th>Evaluation scope</th><th>Observed result</th><th>Engineering interpretation</th></tr></thead><tbody>${validationRows.map(([name, scope, result, note]) => `<tr><td><strong>${escapeHtml(name)}</strong></td><td>${escapeHtml(scope)}</td><td>${escapeHtml(result)}</td><td>${escapeHtml(note)}</td></tr>`).join("")}</tbody></table>`;
+      document.getElementById("agreement-metrics").innerHTML = renderMetricCards(agreement);
+      document.getElementById("quality-table").innerHTML = `<table><thead><tr><th>Gate</th><th>Implemented with</th><th>Failure behavior</th></tr></thead><tbody>${qualityGates.map(([gate, impl, behavior]) => `<tr><td><strong>${escapeHtml(gate)}</strong></td><td>${escapeHtml(impl)}</td><td>${escapeHtml(behavior)}</td></tr>`).join("")}</tbody></table>`;
+      document.getElementById("implemented-stack").innerHTML = renderToolList(implemented);
+      document.getElementById("planned-stack").innerHTML = renderToolList(planned);
+      document.getElementById("wiki-nav-links").innerHTML = wiki.map(([title]) => `<a href="#wiki-${slugify(title)}">${escapeHtml(title)}</a>`).join("");
+      document.getElementById("wiki-body").innerHTML = wiki.map(([title, body]) => `
+        <article class="wiki-article" id="wiki-${slugify(title)}">
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(body)}</p>
+        </article>
+      `).join("");
+    </script>
+  </body>
+</html>
