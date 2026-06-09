@@ -36,14 +36,21 @@ The pipeline keeps raw private text local. It does not send the corpus to a host
 
 | Path | Purpose |
 | --- | --- |
+| `src/corpus_privacy_intelligence/__init__.py` | Package marker and version string |
+| `src/corpus_privacy_intelligence/cli.py` | Command-line entry point for the main scan |
 | `src/corpus_privacy_intelligence/reader.py` | Reads split JSON exports and builds text units |
+| `src/corpus_privacy_intelligence/models.py` | `CorpusUnit` and `Classification` dataclasses |
+| `src/corpus_privacy_intelligence/text.py` | Tokenization, stopwords, light stemming, and term counts |
 | `src/corpus_privacy_intelligence/pii.py` | Detects hard private identifiers |
 | `src/corpus_privacy_intelligence/taxonomy.py` | Public topic families and sensitive-domain terms |
 | `src/corpus_privacy_intelligence/classifier.py` | Policy classifier and routing decisions |
 | `src/corpus_privacy_intelligence/pipeline.py` | End-to-end scan orchestration |
 | `src/corpus_privacy_intelligence/reports.py` | Markdown and JSON output writers |
+| `src/corpus_privacy_intelligence/validators.py` | Independent strict, policy, and term-based detector functions |
+| `src/corpus_privacy_intelligence/validation.py` | Cross-detector validation run and disagreement export |
 | `src/corpus_privacy_intelligence/advanced_validation.py` | Optional multi-detector validation run |
 | `src/corpus_privacy_intelligence/advanced_detectors.py` | Policy, strict, semantic, Presidio, and spaCy detector wrappers |
+| `src/corpus_privacy_intelligence/ollama_validation.py` | Optional local-LLM check of saved disagreement cases |
 | `tests/` | Classifier regression tests |
 | `docs/` | Architecture and validation notes |
 
@@ -129,6 +136,27 @@ Outputs:
 - `advanced_validation_report.md`
 
 Presidio and spaCy are optional. If they are unavailable, the validation runner records them as unavailable instead of pretending they ran.
+
+### Optional Ollama Disagreement Validation
+
+When the independent detectors disagree, `validation.py` records those cases to `automated_validation_disagreements.json`. The optional `ollama_validation` command re-checks each saved disagreement with a local [Ollama](https://ollama.com) model so a second semantic opinion can be compared against the local majority label. This stays fully local: it calls a model running on `127.0.0.1` and never sends the corpus to a hosted service.
+
+```powershell
+python -m corpus_privacy_intelligence.ollama_validation `
+  --input "outputs\validation\automated_validation_disagreements.json" `
+  --out-dir "outputs\ollama_validation" `
+  --model "llama3.2:3b" `
+  --host "http://127.0.0.1:11434" `
+  --limit 50
+```
+
+Outputs:
+
+- `ollama_validation_results.json`
+- `ollama_validation_summary.json`
+- `ollama_validation_report.md`
+
+Each row records the local majority label, the Ollama label and confidence, and whether the two agree. The run resumes from existing results, so already-classified `unit_id` values are skipped. Ollama is an extra local semantic check, not a source of truth on its own. If the model is unreachable the item is marked `review` with the error reason instead of failing the run.
 
 ## Validation
 
